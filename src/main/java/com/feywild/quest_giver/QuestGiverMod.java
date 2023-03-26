@@ -23,6 +23,7 @@ import net.minecraft.client.renderer.entity.VillagerRenderer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.SpawnPlacements;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -40,33 +41,36 @@ import tallestegg.guardvillagers.client.renderer.GuardRenderer;
 
 import javax.annotation.Nonnull;
 
-@Mod("quest_giver")
+@Mod(QuestGiverMod.MODID)
 public final class QuestGiverMod extends ModXRegistration {
 
+    public static final String MODID = "quest_giver";
     private static QuestGiverMod instance;
     private static QuestGiverNetwork network;
 
-    public QuestGiverMod() {
+    public QuestGiverMod(String MODID, CreativeModeTab tab) {
+        super(MODID, tab);
         instance = this;
         network = new QuestGiverNetwork(this);
 
         ConfigManager.registerConfig(new ResourceLocation(this.modid, "quest_numbers"), QuestConfig.class, false);
         ConfigManager.registerConfig(new ResourceLocation(this.modid, "spawn_rates"), SpawnConfig.class, false);
 
-        IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        IEventBus forgeEventBus = MinecraftForge.EVENT_BUS;
 
-        eventBus.addListener(CapabilityQuests::register);
-        eventBus.addListener(this::entityAttributes);
+        modEventBus.addListener(CapabilityQuests::register);
+        modEventBus.addListener(this::entityAttributes);
 
-        MinecraftForge.EVENT_BUS.addListener(this::reloadData);
+        forgeEventBus.addListener(this::reloadData);
 
-        MinecraftForge.EVENT_BUS.addGenericListener(Entity.class, CapabilityQuests::attachPlayerCaps);
-        MinecraftForge.EVENT_BUS.addListener(CapabilityQuests::playerCopy);
+        forgeEventBus.addGenericListener(Entity.class, CapabilityQuests::attachPlayerCaps);
+        forgeEventBus.addListener(CapabilityQuests::playerCopy);
 
-        MinecraftForge.EVENT_BUS.register(EventListener.class);
-        GuildMasterProfession.PROFESSION.register(eventBus);
-        ModPoiTypes.POI_TYPES.register(eventBus);
-        ModStructures.register(eventBus);
+        forgeEventBus.register(EventListener.class);
+        GuildMasterProfession.PROFESSION.register(modEventBus);
+        ModPoiTypes.POI_TYPES.register(modEventBus);
+        ModStructures.register(modEventBus);
 
 
         // Quest task & reward types. Not in setup as they are required for datagen.
@@ -83,7 +87,7 @@ public final class QuestGiverMod extends ModXRegistration {
         RewardTypes.register(new ResourceLocation(this.modid, "command"), CommandReward.INSTANCE);
         RewardTypes.register(new ResourceLocation(this.modid, "reputation"), ReputationReward.INSTANCE);
 
-        MinecraftForge.EVENT_BUS.register(this);
+        forgeEventBus.register(this);
     }
 
     @Nonnull
@@ -96,10 +100,10 @@ public final class QuestGiverMod extends ModXRegistration {
         return network;
     }
 
-    @Override
-    protected void initRegistration(RegistrationBuilder builder) {
-        builder.setVersion(1);
-    }
+    //@Override
+    //protected void initRegistration(RegistrationBuilder builder) {
+    //    builder.setVersion(1);
+    //}
 
     @Override
     protected void setup(final FMLCommonSetupEvent event)
